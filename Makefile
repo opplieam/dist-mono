@@ -16,7 +16,9 @@ help: ## Display this help.
 
 
 ##@ Development
-
+.PHONY: ogen-user
+ogen-user: ## Generate user API
+	$(OGEN) --target ./user/ogen --clean ./openapi/user.yaml
 
 ##@ Dependencies
 
