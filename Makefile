@@ -20,6 +20,10 @@ help: ## Display this help.
 ogen-user: ## Generate user API
 	$(OGEN) --target ./user/ogen --clean ./openapi/user.yaml
 
+.PHONY: ogen-category
+ogen-category: ## Generate category API
+	$(OGEN) --target ./category/ogen --clean ./openapi/category.yaml
+
 ##@ Dependencies
 
 ## Location to install dependencies to
