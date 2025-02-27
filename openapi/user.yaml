@@ -71,6 +71,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /user/{id}:
+    get:
+      summary: Get a user by ID
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCategory'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Default
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     User:
@@ -89,6 +124,22 @@ components:
         - id
         - name
         - email
+    UserCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for the user.
+        name:
+          type: string
+          description: The name of the user.
+        category:
+          type: string
+          description: The name of the category.
+      required:
+        - id
+        - name
+        - category
     Error:
       type: object
       properties:
