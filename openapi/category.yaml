@@ -1,0 +1,65 @@
+openapi: 3.0.3
+info:
+  title: Category API
+  description: API used for learning purpose
+  version: 0.0.1
+servers:
+  - url: 'http://localhost:4000/v1'
+paths:
+  /category/{id}:
+    get:
+      summary: Get a category by ID
+      operationId: getCategoryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        default:
+          description: Default
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for the category.
+        name:
+          type: string
+          description: The name of the category.
+      required:
+        - id
+        - name
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: The error message.
+      required:
+        - message
