@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/jackc/pgx/v5"
+	db "github.com/opplieam/dist-mono/db/sqlc"
 	catHandler "github.com/opplieam/dist-mono/internal/category/handler"
+	catStore "github.com/opplieam/dist-mono/internal/category/store"
 	userHandler "github.com/opplieam/dist-mono/internal/user/handler"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -19,10 +24,19 @@ func main() {
 		log.Fatalf("Invalid target: %s. Must be 'user' or 'category'", *target)
 	}
 
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DB_DSN"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close(context.Background())
+
+	query := db.New(conn)
+
 	switch *target {
 	case "category":
 		fmt.Println("Starting category service")
-		cHandler := catHandler.NewCategoryHandler()
+		store := catStore.NewStore(query)
+		cHandler := catHandler.NewCategoryHandler(store)
 		sig, err := cHandler.Start()
 		if err != nil {
 			log.Fatal(err)

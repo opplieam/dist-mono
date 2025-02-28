@@ -14,20 +14,24 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/opplieam/dist-mono/internal/category/api"
+	"github.com/opplieam/dist-mono/internal/category/store"
 )
 
-var (
-	ErrCategoryNotFound = errors.New("category not found")
-)
+type Storer interface {
+	GetCategoryByID(ctx context.Context, userID int) (*store.CategoryResult, error)
+}
 
 type CategoryHandler struct {
 	hServer *http.Server
+	store   Storer
 }
 
 var _ api.Handler = (*CategoryHandler)(nil)
 
-func NewCategoryHandler() *CategoryHandler {
-	return &CategoryHandler{}
+func NewCategoryHandler(s Storer) *CategoryHandler {
+	return &CategoryHandler{
+		store: s,
+	}
 }
 
 func (h *CategoryHandler) Start() (chan os.Signal, error) {
@@ -66,17 +70,20 @@ func (h *CategoryHandler) Shutdown() error {
 }
 
 func (h *CategoryHandler) GetCategoryById(ctx context.Context, params api.GetCategoryByIdParams) (api.GetCategoryByIdRes, error) {
-	// TODO: Add real database call
 	log.Printf("GetCategoryById: %v", params)
+	res, err := h.store.GetCategoryByID(ctx, params.ID)
+	if err != nil {
+		return nil, err
+	}
 	return &api.Category{
-		ID:   0,
-		Name: "Test",
+		ID:   res.ID,
+		Name: res.Name,
 	}, nil
 }
 
 func (h *CategoryHandler) NewError(ctx context.Context, err error) *api.ErrorStatusCode {
 	switch {
-	case errors.Is(err, ErrCategoryNotFound):
+	case errors.Is(err, store.ErrCategoryNotFound):
 		return &api.ErrorStatusCode{
 			StatusCode: http.StatusNotFound,
 			Response: api.Error{
