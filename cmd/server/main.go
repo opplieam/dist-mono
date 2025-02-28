@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/opplieam/dist-mono/internal/category/handler"
+	catHandler "github.com/opplieam/dist-mono/internal/category/handler"
+	userHandler "github.com/opplieam/dist-mono/internal/user/handler"
 )
 
 func main() {
@@ -19,20 +20,32 @@ func main() {
 	switch *target {
 	case "category":
 		fmt.Println("Starting category service")
-		catHandler := handler.NewCategoryHandler()
-		sig, err := catHandler.Start()
+		cHandler := catHandler.NewCategoryHandler()
+		sig, err := cHandler.Start()
 		if err != nil {
 			log.Fatal(err)
 		}
 		<-sig
 		fmt.Println("Shutting down category service")
-		err = catHandler.Shutdown()
+		err = cHandler.Shutdown()
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Println("Gratefully shutting down category service")
 	case "user":
 		fmt.Println("Starting user service")
+		uHandler := userHandler.NewUserHandler()
+		sig, err := uHandler.Start()
+		if err != nil {
+			log.Fatal(err)
+		}
+		<-sig
+		fmt.Println("Shutting down user service")
+		err = uHandler.Shutdown()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Gratefully shutting down user service")
 	}
 
 }

@@ -28,6 +28,10 @@ ogen-category: ## Generate category API
 run-category: ## Run category service
 	go run ./cmd/server -target category
 
+.PHONY: run-user
+run-user: ## Run user service
+	go run ./cmd/server -target user
+
 ##@ Dependencies
 
 ## Location to install dependencies to
