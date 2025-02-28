@@ -24,6 +24,10 @@ ogen-user: ## Generate user API
 ogen-category: ## Generate category API
 	$(OGEN) --target ./internal/category/api/ --clean ./openapi/category.yaml
 
+.PHONY: sqlc-gen
+sqlc-gen: ## Generate sqlc
+	$(SQLC) generate
+
 .PHONY: run-category
 run-category: ## Run category service
 	go run ./cmd/server -target category
@@ -41,14 +45,21 @@ $(LOCALBIN):
 
 ## Tool Binaries
 OGEN = $(LOCALBIN)/ogen
+SQLC = $(LOCALBIN)/sqlc
 
 ## Tool Versions
 OGEN_VERSION ?= v1.10.0
+SQLC_VERSION ?= v1.28.0
 
 .PHONY: ogen
 ogen: $(OGEN) ## Download ogen locally if necessary.
 $(OGEN): $(LOCALBIN)
 	$(call go-install-tool,$(OGEN),github.com/ogen-go/ogen/cmd/ogen,$(OGEN_VERSION))
+
+.PHONY: sqlc
+sqlc: $(SQLC) ## Download sqlc locally if necessary.
+$(SQLC): $(LOCALBIN)
+	$(call go-install-tool,$(SQLC),github.com/sqlc-dev/sqlc/cmd/sqlc,$(SQLC_VERSION))
 
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
