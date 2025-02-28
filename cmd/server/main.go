@@ -9,9 +9,11 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	db "github.com/opplieam/dist-mono/db/sqlc"
+	catApi "github.com/opplieam/dist-mono/internal/category/api"
 	catHandler "github.com/opplieam/dist-mono/internal/category/handler"
 	catStore "github.com/opplieam/dist-mono/internal/category/store"
 	userHandler "github.com/opplieam/dist-mono/internal/user/handler"
+	userStore "github.com/opplieam/dist-mono/internal/user/store"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -49,8 +51,14 @@ func main() {
 		}
 		fmt.Println("Gratefully shutting down category service")
 	case "user":
+		categoryClient, aErr := catApi.NewClient("http://localhost:4000/v1")
+		if aErr != nil {
+			log.Fatal(aErr)
+		}
+
 		fmt.Println("Starting user service")
-		uHandler := userHandler.NewUserHandler()
+		store := userStore.NewStore(query, categoryClient)
+		uHandler := userHandler.NewUserHandler(store)
 		sig, err := uHandler.Start()
 		if err != nil {
 			log.Fatal(err)

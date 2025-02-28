@@ -14,20 +14,26 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/opplieam/dist-mono/internal/user/api"
+	"github.com/opplieam/dist-mono/internal/user/store"
 )
 
-var (
-	ErrUserNotFound = errors.New("user not found")
-)
+type Storer interface {
+	CreateUser(ctx context.Context, name, email string) (int, error)
+	GetAllUsers(ctx context.Context) (*api.GetAllUsersOKApplicationJSON, error)
+	GetUserCategory(ctx context.Context, userID int) (*api.UserCategory, error)
+}
 
 type UserHandler struct {
 	hServer *http.Server
+	store   Storer
 }
 
 var _ api.Handler = (*UserHandler)(nil)
 
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(s Storer) *UserHandler {
+	return &UserHandler{
+		store: s,
+	}
 }
 
 func (u *UserHandler) Start() (chan os.Signal, error) {
@@ -66,38 +72,47 @@ func (u *UserHandler) Shutdown() error {
 }
 
 func (u *UserHandler) CreateUser(ctx context.Context, req *api.User) (api.CreateUserRes, error) {
+	name := req.GetName()
+	email := req.GetEmail()
+	userId, err := u.store.CreateUser(ctx, name, email)
+	if err != nil {
+		return nil, err
+	}
 	return &api.User{
-		ID:    0,
-		Name:  "Test",
-		Email: "Test@example.com",
+		ID:    userId,
+		Name:  name,
+		Email: email,
 	}, nil
 }
 
 func (u *UserHandler) GetAllUsers(ctx context.Context) (api.GetAllUsersRes, error) {
-	var apiUsers api.GetAllUsersOKApplicationJSON
-	for i := 0; i < 2; i++ {
-		apiUsers = append(apiUsers, api.User{
-			ID:    i,
-			Name:  "",
-			Email: "",
-		})
+	users, err := u.store.GetAllUsers(ctx)
+	if err != nil {
+		return nil, err
 	}
-	return &apiUsers, nil
+	return users, nil
 }
 
 func (u *UserHandler) GetUserById(ctx context.Context, params api.GetUserByIdParams) (api.GetUserByIdRes, error) {
-	return &api.UserCategory{
-		ID:       0,
-		Name:     "Test",
-		Category: "Test",
-	}, nil
+	userCat, err := u.store.GetUserCategory(ctx, params.ID)
+	if err != nil {
+		return nil, err
+	}
+	return userCat, nil
 }
 
 func (u *UserHandler) NewError(ctx context.Context, err error) *api.ErrorStatusCode {
 	switch {
-	case errors.Is(err, ErrUserNotFound):
+	case errors.Is(err, store.ErrUserNotFound):
 		return &api.ErrorStatusCode{
 			StatusCode: http.StatusNotFound,
+			Response: api.Error{
+				Message: err.Error(),
+			},
+		}
+	case errors.Is(err, store.ErrCategoryConn):
+		return &api.ErrorStatusCode{
+			StatusCode: http.StatusServiceUnavailable,
 			Response: api.Error{
 				Message: err.Error(),
 			},
