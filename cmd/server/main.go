@@ -7,6 +7,8 @@ import (
 
 	catHandler "github.com/opplieam/dist-mono/internal/category/handler"
 	userHandler "github.com/opplieam/dist-mono/internal/user/handler"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
