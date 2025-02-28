@@ -18,11 +18,15 @@ help: ## Display this help.
 ##@ Development
 .PHONY: ogen-user
 ogen-user: ## Generate user API
-	$(OGEN) --target ./user/ogen --clean ./openapi/user.yaml
+	$(OGEN) --target ./internal/user/api --clean ./openapi/user.yaml
 
 .PHONY: ogen-category
 ogen-category: ## Generate category API
-	$(OGEN) --target ./category/ogen --clean ./openapi/category.yaml
+	$(OGEN) --target ./internal/category/api/ --clean ./openapi/category.yaml
+
+.PHONY: run-category
+run-category: ## Run category service
+	go run ./cmd/server -target category
 
 ##@ Dependencies
 
