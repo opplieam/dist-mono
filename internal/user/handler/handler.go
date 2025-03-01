@@ -15,6 +15,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/opplieam/dist-mono/internal/user/api"
 	"github.com/opplieam/dist-mono/internal/user/store"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type Storer interface {
@@ -24,15 +27,19 @@ type Storer interface {
 }
 
 type UserHandler struct {
-	hServer *http.Server
-	store   Storer
+	hServer    *http.Server
+	store      Storer
+	errCounter metric.Int64Counter
 }
 
 var _ api.Handler = (*UserHandler)(nil)
 
 func NewUserHandler(s Storer) *UserHandler {
+	meter := otel.GetMeterProvider().Meter("service-user")
+	errCounter, _ := meter.Int64Counter("service.errors", metric.WithDescription("Total service errors"))
 	return &UserHandler{
-		store: s,
+		store:      s,
+		errCounter: errCounter,
 	}
 }
 
@@ -104,6 +111,9 @@ func (u *UserHandler) GetUserById(ctx context.Context, params api.GetUserByIdPar
 func (u *UserHandler) NewError(ctx context.Context, err error) *api.ErrorStatusCode {
 	switch {
 	case errors.Is(err, store.ErrUserNotFound):
+		u.errCounter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("type", "not_found"),
+		))
 		return &api.ErrorStatusCode{
 			StatusCode: http.StatusNotFound,
 			Response: api.Error{
@@ -111,6 +121,9 @@ func (u *UserHandler) NewError(ctx context.Context, err error) *api.ErrorStatusC
 			},
 		}
 	case errors.Is(err, store.ErrCategoryConn):
+		u.errCounter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("type", "dependency_failure"),
+		))
 		return &api.ErrorStatusCode{
 			StatusCode: http.StatusServiceUnavailable,
 			Response: api.Error{
@@ -118,6 +131,9 @@ func (u *UserHandler) NewError(ctx context.Context, err error) *api.ErrorStatusC
 			},
 		}
 	default:
+		u.errCounter.Add(ctx, 1, metric.WithAttributes(
+			attribute.String("type", "internal"),
+		))
 		return &api.ErrorStatusCode{
 			StatusCode: http.StatusInternalServerError,
 			Response: api.Error{

@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	ErrUserNotFound = errors.New("user not found")
-	ErrCategoryConn = errors.New("category service down")
+	ErrUserNotFound    = errors.New("user not found")
+	ErrCategoryConn    = errors.New("category service down")
+	ErrNoCategoryFound = errors.New("no category found for this user")
 )
 
 type Store struct {
@@ -66,7 +67,12 @@ func (s *Store) GetUserCategory(ctx context.Context, userID int) (*api.UserCateg
 		}
 	}
 	catRes, err := s.catClient.GetCategoryById(ctx, catApi.GetCategoryByIdParams{ID: userID})
+
 	if err != nil {
+		var apiErr *catApi.ErrorStatusCode
+		if errors.As(err, &apiErr) {
+			return nil, ErrNoCategoryFound
+		}
 		return nil, ErrCategoryConn
 	}
 
